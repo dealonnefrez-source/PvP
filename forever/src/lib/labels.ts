@@ -7,15 +7,15 @@ export const GUILD_ROLE_LABELS: Record<GuildRole, string> = {
 };
 
 export const COMBAT_ROLE_LABELS: Record<CombatRole, string> = {
-  tank: "Obrońca",
-  healer: "Uzdrowiciel",
-  dps: "Zadający obrażenia",
+  tank: "Tank (obrońca)",
+  healer: "Healer (uzdrowiciel)",
+  dps: "DPS (obrażenia)",
 };
 
 export const EVENT_TYPE_LABELS: Record<"pvp" | "battleground" | "raid" | "other", string> = {
-  pvp: "Walka z graczami",
-  battleground: "Pole bitwy",
-  raid: "Rajd",
+  pvp: "Arena",
+  battleground: "Premade BG",
+  raid: "Rajd na miasto",
   other: "Inne",
 };
 

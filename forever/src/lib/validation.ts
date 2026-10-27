@@ -3,6 +3,7 @@ import { pl } from "zod/locales";
 import { CHARACTER_CLASSES, PROFESSIONS, RACES } from "./wow";
 
 z.config(pl());
+export { z };
 
 export const loginSchema = z.object({
   email: z.email("Podaj poprawny adres e-mail.").trim().max(254, "Adres e-mail może mieć maksymalnie 254 znaki."),

@@ -24,8 +24,8 @@ describe("Polski interfejs", () => {
 
   it("udostępnia polskie nazwy ról, wydarzeń i grup dla kolejnych funkcji", () => {
     assert.deepEqual(GUILD_ROLE_LABELS, { member: "Członek gildii", officer: "Oficer", admin: "Administrator" });
-    assert.deepEqual(COMBAT_ROLE_LABELS, { tank: "Obrońca", healer: "Uzdrowiciel", dps: "Zadający obrażenia" });
-    assert.deepEqual(EVENT_TYPE_LABELS, { pvp: "Walka z graczami", battleground: "Pole bitwy", raid: "Rajd", other: "Inne" });
+    assert.deepEqual(COMBAT_ROLE_LABELS, { tank: "Tank (obrońca)", healer: "Healer (uzdrowiciel)", dps: "DPS (obrażenia)" });
+    assert.deepEqual(EVENT_TYPE_LABELS, { pvp: "Arena", battleground: "Premade BG", raid: "Rajd na miasto", other: "Inne" });
     assert.deepEqual(EVENT_STATUS_LABELS, { scheduled: "Zaplanowane", cancelled: "Odwołane", completed: "Zakończone" });
     assert.deepEqual(LFG_ACTIVITY_LABELS, { arena: "Arena", battleground: "Pole bitwy", mythic_plus: "Loch mityczny+", raid: "Rajd", other: "Inne" });
     assert.deepEqual(LFG_STATUS_LABELS, { open: "Otwarta", filled: "Kompletna", closed: "Zamknięta" });

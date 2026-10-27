@@ -41,7 +41,7 @@ export default function Home() {
       <section aria-label="Funkcje gildii" className="grid gap-5 md:grid-cols-3">
         {[
           { icon: Users, title: "Twoje konto, twoja gildia", text: "Zarejestruj się i potwierdź e-mail. Dane postaci uzupełnisz opcjonalnie w zakładce „Twój Profil”.", phase: "Dostępne po konfiguracji" },
-          { icon: CalendarDays, title: "Zarezerwuj czas na przygodę", text: "Wydarzenia gildii i zapisy z wyborem roli to kolejny etap.", phase: "Wkrótce: wydarzenia i zapisy" },
+          { icon: CalendarDays, title: "Zarezerwuj czas na przygodę", text: "Kalendarz PvP, wydarzenia oficerów i zapisy z wyborem roli.", phase: "Dostępne po migracji 003" },
           { icon: Swords, title: "Nie wyruszaj samotnie", text: "Planujemy wyszukiwanie grup i powiadomienia na Discordzie.", phase: "Wkrótce: wyszukiwanie grup" },
         ].map(({ icon: Icon, title, text, phase }) => (
           <Card key={title}>

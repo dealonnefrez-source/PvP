@@ -126,8 +126,55 @@ Test na prawdziwym Supabase i skrzynce e-mail:
 
 Aktywność oznacza korzystanie ze strony, nie obecność w WoW. Panel wysyła żądanie po otwarciu widocznej karty, co pięć minut i po powrocie do karty. Baza ogranicza zapisy do jednego na minutę. Lista aktywnych obejmuje ostatnie 15 minut; odśwież stronę, aby ją zaktualizować. Żądania aktywności muszą pochodzić z origin określonego przez `NEXT_PUBLIC_SITE_URL`.
 
+## Wydarzenia PvP i kalendarz
+
+Po migracji 002 uruchom **raz** w Supabase SQL Editor jako `postgres`:
+
+**[202610270003_pvp_events.sql](supabase/migrations/202610270003_pvp_events.sql)**
+
+Nie uruchamiaj ponownie migracji 001 ani 002. Plik 003 obsługuje zarówno bazę minimalną po 002, jak i bazę z dawnymi wydarzeniami po 001 + 002. Zachowuje istniejące profile, role i zapisy. Dodaje rolę gildii (`guild_role`) do profili oraz tabele `events` i `event_rsvps`, jeśli jeszcze ich nie ma. Nowe konta mają rolę `member`. Nie wraca żaden obowiązkowy onboarding.
+
+### Nadanie uprawnień oficera
+
+W Supabase Authentication → Users znajdź UUID konta. Uruchom jako `postgres`, podstawiając rzeczywisty UUID:
+
+```sql
+update public.profiles
+set guild_role = 'officer'
+where id = 'TUTAJ_UUID_KONTA';
+```
+
+Właściciel projektu może również nadać `admin`. Członkowie nie mogą zmieniać tej kolumny przez aplikację ani API. Nie wystarczy dodać roli do metadanych konta Auth — źródłem uprawnień jest kolumna `profiles.guild_role`.
+
+### Korzystanie
+
+- **Wydarzenia** (`/events`) są dostępne z panelu głównego i profilu.
+- Kalendarz miesięczny zaczyna tydzień od poniedziałku. Strzałki zmieniają miesiąc; lista pod kalendarzem pokazuje wydarzenia rozpoczynające się w danym miesiącu, także odwołane.
+- Oficer/administrator ma przycisk **Zaplanuj wydarzenie** (`/events/new`): nazwa, aktywność (Premade BG, Arena, Rajd na miasto lub Inne), początek, koniec, docelowy skład i opcjonalny opis.
+- Formularz odczytuje czas lokalny przeglądarki i zapisuje go jako UTC. Kalendarz i szczegóły zawsze wyświetlają czas polski `Europe/Warsaw`, z uwzględnieniem czasu letniego. Nieistniejące godziny wiosennej zmiany czasu są odrzucane. Dla podwójnej godziny jesiennej przeglądarka wybiera pierwsze wystąpienie.
+- Gracz otwiera szczegóły (`/events/<UUID>`), wybiera **Tank, Healer lub DPS** i klika **Biorę udział**. Można później zmienić rolę albo wycofać udział. Rola jest przypisana wyłącznie do wydarzenia, nie do profilu.
+- Pusty profil nie blokuje zapisu. Na liście uczestników pojawia się nazwa postaci, a przy jej braku identyfikator gracza. E-maile nie są ujawniane. Nazwę można później uzupełnić w „Twój Profil”.
+- Trzy kolumny składu pokazują liczby zapisanych, cel i braki. Cele **nie są limitami miejsc** — nadwyżka jest oznaczona osobno; nie ma automatycznej rezerwy ani przydziału miejsc. Kolejność to czas pierwszego zapisu.
+- Zapisy i zmiana roli zamykają się z rozpoczęciem wydarzenia, po odwołaniu lub zakończeniu. Wycofać własny udział można także później. Oficer może odwołać wydarzenie bez kasowania listy uczestników.
+- Zapisy innych graczy są widoczne po odświeżeniu; brak subskrypcji Realtime. Kalendarz pokazuje do 1000 wydarzeń w pobieranym zakresie, a szczegóły do 1000 uczestników. Przekroczenie limitu powoduje jawny błąd zamiast pokazania niepełnych liczb.
+
+### Zabezpieczenia i Discord
+
+RLS pozwala tworzyć/zarządzać wydarzeniami wyłącznie oficerom i administratorom. Potwierdzone konta mogą czytać wydarzenia i listy zapisów. Uczestnik zmienia tylko własne zgłoszenie; nawet oficer nie zmienia cudzego RSVP. Klucz główny `(event_id, profile_id)` zapobiega duplikatom. RPC `save_event_rsvp` działa z uprawnieniami wywołującego i aktualizuje tylko rolę — nie pozwala podmieniać uczestnika ani wydarzenia. Wyzwalacz bazy sprawdza zamknięcie zapisów również przy bezpośrednim wywołaniu API.
+
+Opcjonalny `DISCORD_WEBHOOK_URL` w Vercel uruchamia powiadomienie po utworzeniu wydarzenia. Nie używaj prefiksu `NEXT_PUBLIC_`. Nieudana dostawa nie usuwa wydarzenia; oficer zobaczy ostrzeżenie i link do poprawnie utworzonego wydarzenia. Nie ma automatycznych ponowień dostawy. Brak webhooka oznacza wyłączone powiadomienia i nie blokuje planowania.
+
+### Test po wdrożeniu
+
+1. Uruchom migrację 003 i nadaj wybranemu kontu rolę oficera.
+2. Wdróż nową wersję na Vercel.
+3. Jako oficer utwórz przyszłe wydarzenie z docelowym składem i sprawdź jego datę w kalendarzu.
+4. Jako zwykły gracz z pustym profilem sprawdź brak formularza planowania, a następnie zapisz się jako Healer.
+5. Zmień rolę na DPS — licznik Healerów powinien zmaleć, a DPS wzrosnąć, bez duplikatu osoby.
+6. Wycofaj udział. Następnie zapisz się ponownie i odwołaj wydarzenie jako oficer: lista pozostaje, ale nowe zapisy/zmiana roli są blokowane.
+
 ## Język i kolejne etapy
 
 Wszystkie obecne i przyszłe formularze, tabele, role, błędy oraz powiadomienia muszą być po polsku (`lang="pl"`). Wspólne etykiety znajdują się w [wow.ts](src/lib/wow.ts) i [labels.ts](src/lib/labels.ts).
 
-Lista członków z filtrami, wydarzenia i wyszukiwanie grup pozostają kolejnymi etapami. Nowa instalacja nie potrzebuje ich tabel. Przygotowana [funkcja Discorda](src/lib/discord.ts) pozostaje narzędziem do przyszłych powiadomień; brak webhooka nie blokuje kont ani profili.
+Lista członków z filtrami i wyszukiwanie grup pozostają kolejnymi etapami. Podstawowe konta i profile nadal działają bez danych postaci. Wydarzenia wymagają dodatkowej migracji 003 opisanej powyżej.
