@@ -17,7 +17,7 @@ export function AuthForm({ mode, notice }: { mode: "login" | "register"; notice?
     <Card>
       <CardHeader>
         <CardTitle className="text-2xl">{registering ? "Twoja przygoda zaczyna się tutaj" : "Witaj ponownie"}</CardTitle>
-        <CardDescription>{registering ? "Utwórz konto gildii. Następnie przedstawisz swoją postać." : "Zaloguj się do siedziby gildii Forever."}</CardDescription>
+        <CardDescription>{registering ? "Podaj e-mail i hasło. Potwierdź konto linkiem z wiadomości, aby od razu korzystać ze strony." : "Zaloguj się do siedziby gildii Forever."}</CardDescription>
       </CardHeader>
       <CardContent>
         <form action={action} className="space-y-5" onInvalidCapture={localizeFieldValidity} onInputCapture={clearFieldValidity}>

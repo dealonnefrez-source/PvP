@@ -1,44 +1,21 @@
-# Forever guild hall
+# Forever — strona polskiej gildii WoW
 
-Next.js App Router, React, TypeScript, Tailwind CSS, shadcn/ui (Base UI), and Supabase Auth/PostgreSQL.
+Next.js App Router, React, TypeScript, Tailwind CSS, shadcn/ui i Supabase Auth/PostgreSQL.
 
-## Język interfejsu
+## Prosty dostęp do strony
 
-Interfejs gildii Forever jest polskojęzyczny (`lang="pl"`). Wszystkie nowe formularze, tabele, role, stany, komunikaty walidacji i powiadomienia również należy tworzyć po polsku.
+1. Użytkownik rejestruje się, podając wyłącznie adres e-mail i hasło.
+2. Otrzymuje wiadomość z linkiem potwierdzającym.
+3. Kliknięcie linku potwierdza konto, tworzy sesję i otwiera panel główny.
+4. Dane postaci są całkowicie opcjonalne. Zakładka **Twój Profil** (`/profile`) pozwala zapisywać wybrane pola albo wyczyścić wszystkie.
 
-Polskie etykiety klas, ras i profesji znajdują się w [katalogu postaci](src/lib/wow.ts), a nazwy ról, aktywności i stanów w [etykietach interfejsu](src/lib/labels.ts). Wartości zapisywane w bazie oraz adresy tras pozostają niezmienione; tłumaczone są etykiety widoczne dla użytkownika. Formularze mają polskie komunikaty walidacji zarówno po stronie serwera, jak i w przeglądarce. Nie wymaga to migracji istniejących danych.
+Nie ma wymuszonego onboardingu, wyboru roli ani wymogu kompletności postaci. Stary adres `/onboarding` jedynie przekierowuje do `/profile`, aby zachować działanie istniejących odnośników. Logowanie na istniejące konto również prowadzi prosto do panelu.
 
-Konfigurując wiadomości Supabase Auth, należy również używać polskich tematów i treści. W przykładowym szablonie poniżej tekst odnośnika jest już po polsku; pozostałą treść wiadomości należy ustawić w panelu Supabase.
+Każde konto z potwierdzonym adresem e-mail ma dostęp członka gildii. Nie jest to system zaproszeń ani zatwierdzania członkostwa.
 
-## Milestones
+## Uruchomienie lokalne
 
-- Implemented: Supabase SSR/browser clients, session refresh, registration, login/logout, email confirmation, protected character onboarding/editing, and a dashboard with recent website activity.
-- Prepared: approved PostgreSQL schema for profiles, events, RSVPs, and LFG listings, including RLS and database constraints; server-only Discord webhook utility.
-- Next: filterable guild roster; event scheduling and role-based RSVP screens; temporary LFG creation/search. Event/LFG mutation handlers must call the Discord utility after a successful database write. No event/LFG UI or delivery retry queue is implemented yet.
-
-One account represents one main character. Verified, onboarded self-registrations receive guild access; this is **not an invite-only membership system**. “Active” means website activity within 15 minutes, not WoW login status.
-
-## Prerequisites
-
-- Node.js 22.13+ (Node.js 24 LTS recommended) and npm.
-- A Supabase project. No Supabase credentials or hosted database are bundled.
-
-The initial development environment did not have Node on PATH. A checksum-verified portable Node runtime was used for local validation only. Install Node normally for the following commands.
-
-## Initialization commands
-
-These are the equivalent commands used to create this project. **Do not scaffold again over this existing directory.**
-
-```powershell
-npx create-next-app@latest forever --typescript --tailwind --eslint --app --src-dir --import-alias "@/*" --use-npm --disable-git --yes
-Set-Location .\forever
-npm install @supabase/ssr @supabase/supabase-js zod server-only
-npx shadcn@latest init --defaults
-npx shadcn@latest add button card input label badge --yes
-npm install --save-dev @electric-sql/pglite tsx
-```
-
-For the already-generated application:
+Wymagany Node.js 24 LTS i npm.
 
 ```powershell
 Set-Location E:\WoW\PvP\forever
@@ -46,122 +23,111 @@ npm ci
 Copy-Item .env.example .env.local
 ```
 
-Edit `.env.local`:
+Wypełnij `.env.local`:
 
 ```dotenv
-NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
+NEXT_PUBLIC_SUPABASE_URL=https://TWOJ_PROJEKT.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=TWOJ_KLUCZ_PUBLICZNY
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 DISCORD_WEBHOOK_URL=
 ```
 
-Use the project's **publishable key** from Supabase Settings > API Keys. Never use a secret/service-role key in the browser or a `NEXT_PUBLIC_` variable. The application does not need a service-role key. Restart the development server after changing environment variables. Production `NEXT_PUBLIC_` values are captured at build time: configure them **before** `npm run build`, and rebuild/redeploy when they change.
+Nigdy nie używaj klucza `secret` ani `service_role` w zmiennych `NEXT_PUBLIC_*`. Klucz administracyjny nie jest potrzebny aplikacji.
 
-## Database setup
-
-Run [the initial migration](supabase/migrations/202610270001_initial_schema.sql) in the Supabase SQL Editor as the database owner. It runs in a transaction and is intended to be applied once to a new project, not repeatedly. Alternatively, link this directory using the Supabase CLI and run `supabase db push`.
-
-The migration creates:
-
-| Table | Purpose |
-| --- | --- |
-| `auth.users` | Supabase-managed accounts (already exists in Supabase) |
-| `public.profiles` | Character details, guild role, onboarding, website presence |
-| `public.events` | Guild calendar and event lifecycle |
-| `public.event_rsvps` | One selected combat role per member/event |
-| `public.lfg_groups` | Temporary group advertisements and role vacancies |
-
-RLS denies anonymous guild-data access. Members cannot directly mutate profiles, including guild roles and activity timestamps: authenticated RPCs handle character editing and throttled server-timestamped presence. Only verified, onboarded members can access shared guild data. Owners/officers manage events and LFG; each member manages only their own RSVPs.
-
-The character catalog is a **starter retail-style superset**, not a confirmed server-specific catalog, and does not enforce race/class combinations. A WoW expansion/client version has not been specified. Before guild rollout, align [the shared options](src/lib/wow.ts) and the SQL catalog constraints with the guild's exact server/version. Catalog compatibility is covered by database tests.
-
-To appoint the first admin, run a trusted SQL Editor operation after that member registers. Never expose this operation as a self-service profile field:
-
-```sql
-update public.profiles
-set guild_role = 'admin'
-where id = 'REPLACE_WITH_AUTH_USER_UUID';
+```powershell
+npm run dev
 ```
 
-Deleting an account removes its profile/RSVPs, but preserves organized events and LFG listings with nullable ownership. Officers can manage these orphaned listings. Event times use `timestamptz`. Future event screens must convert local inputs to instants and render them in the viewer's timezone. Future LFG queries must use both `status = 'open'` and `expires_at > now()`; stored status alone does not mean a listing is active.
+Otwórz `http://localhost:3000`. Bez konfiguracji Supabase aplikacja wyświetli instrukcję konfiguracji zamiast symulować logowanie.
 
-## Supabase Auth setup
+## SQL — jedna tabela aplikacji
 
-1. Enable the Email provider and **Confirm email** in Authentication > Providers.
-2. Set the Site URL to `http://localhost:3000` for development and your HTTPS origin for production.
-3. Add exact redirect URLs for `/auth/callback` on each permitted origin. Do not allow arbitrary production wildcard redirects.
-4. Configure the **Confirm signup** email template to use this confirmation link:
+W **Supabase → SQL Editor → New query** uruchom jako `postgres` cały plik:
+
+**[202610270002_optional_profiles.sql](supabase/migrations/202610270002_optional_profiles.sql)**
+
+Ten sam skrypt obsługuje oba przypadki:
+
+- **Pusta baza:** tworzy wyłącznie `public.profiles`. Konta, hasła i potwierdzanie e-maila obsługuje istniejąca w Supabase tabela `auth.users`.
+- **Baza po starej migracji 001:** usuwa wymóg onboardingu, stare RPC `complete_onboarding` i kolumnę `onboarded_at`, zmienia zasady dostępu oraz zachowuje konta i dane postaci. Nie usuwa istniejących wydarzeń, zapisów, grup ani ról administracyjnych.
+
+Uruchom skrypt raz i wdrażaj go razem z nową wersją aplikacji. Jeśli istnieją niestandardowe tabele/polityki inne niż nasz schemat, najpierw sprawdź ich zgodność. Skrypt nie resetuje bazy i nie używa `DROP ... CASCADE`.
+
+**Nie uruchamiaj starej migracji 001 w nowym projekcie.** Jest zachowana jako historia i materiał testowy dla aktualizacji istniejącej bazy. Wykonanie całej historii przez `supabase db push` utworzy również dawne tabele wydarzeń/grup; dla minimalnej instalacji użyj bezpośrednio pliku 002 w SQL Editor.
+
+### Zawartość profilu
+
+| Kolumna | Znaczenie |
+| --- | --- |
+| `id` | Identyfikator konta z `auth.users` |
+| `character_name` | Opcjonalna nazwa postaci |
+| `realm` | Opcjonalny serwer |
+| `race`, `character_class` | Opcjonalna rasa i klasa |
+| `primary_professions` | Od zera do dwóch profesji głównych |
+| `last_active_at` | Ostatnia aktywność na stronie |
+| `created_at`, `updated_at` | Znaczniki czasu |
+
+Każde pole postaci można zapisać osobno. Puste pola tekstowe i niewybrane opcje zapisują się jako `NULL`, brak profesji jako pusta tablica. Katalog jest nadal startowym zestawem w stylu Retail, bez wymuszania kombinacji rasa/klasa. Techniczne wartości są angielskie, a etykiety interfejsu polskie.
+
+### RLS i uprawnienia
+
+- Brak anonimowego dostępu do profili i funkcji aktywności.
+- Potwierdzone konto może odczytywać profile gildii bez uzupełniania własnej postaci.
+- Niepotwierdzone konto może odczytać jedynie własny profil; nie może go aktualizować ani rejestrować aktywności.
+- Użytkownik może zmieniać tylko własne pola postaci. Nie może zmieniać identyfikatorów, znaczników czasu ani starych ról gildii.
+- Profile tworzy automatycznie wyzwalacz rejestracji. Skrypt uzupełnia także brakujące profile dla wcześniej założonych kont.
+- Aktualizacje czasu aktywności wykonuje funkcja z czasem serwera, nie przeglądarka.
+
+## Potwierdzanie adresu e-mail
+
+W Supabase:
+
+1. Włącz Email oraz **Confirm email** w ustawieniach dostawcy logowania.
+2. W **Authentication → URL Configuration** ustaw Site URL na `http://localhost:3000`, a na produkcji na pełny adres HTTPS strony.
+3. Dodaj do Redirect URLs dokładny adres `http://localhost:3000/auth/callback` i odpowiednik produkcyjny.
+4. W szablonie **Confirm signup** ustaw polski temat i treść. Link ma mieć następującą postać:
 
    ```html
    <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup">Potwierdź konto w gildii Forever</a>
    ```
 
-   This token-hash route works when the email is opened on a different device. The `/auth/callback` PKCE route is also available for flows returning an authorization code to the browser that initiated sign-up.
+Ta wersja działa również po otwarciu linku na innym urządzeniu. `/auth/confirm` weryfikuje token, zapisuje sesję w ciasteczkach i przekierowuje od razu do `/dashboard`. Uzupełnianie profilu nie jest częścią tego procesu. Dostępny jest również `/auth/callback` dla przepływu PKCE.
 
-5. Configure a production SMTP provider and appropriate Supabase rate limits/CAPTCHA settings before opening registration publicly. Set the provider password minimum to at least 12 to match this application's registration rule.
+Przed publicznym uruchomieniem skonfiguruj SMTP, limity rejestracji i odpowiednie zabezpieczenia Supabase Auth. Minimalna długość nowego hasła w aplikacji wynosi 12 znaków.
 
-Registration creates an incomplete profile. After email confirmation and login, members are redirected to `/onboarding`. Saving valid character details grants access to `/dashboard`. Revisit `/onboarding` to edit the character later. Zero to two primary professions are supported.
+## Wdrożenie na Vercel
 
-## Run and validate
+Ustaw katalog główny projektu na `forever`, jeśli importujesz nadrzędny katalog. Dodaj zmienne:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_SITE_URL` — pełny adres strony, bez końcowego `/`
+
+Wykonaj Redeploy po zmianie zmiennych: wartości `NEXT_PUBLIC_*` są odczytywane przy kompilacji. Dostosuj też Site URL i Redirect URLs w Supabase. Nie dodawaj prawdziwych kluczy do repozytorium.
+
+## Sprawdzanie działania
 
 ```powershell
-npm run dev
-# Open http://localhost:3000
-```
-
-```powershell
-npm run test
+npm test
 npm run lint
 npm run typecheck
 npm run build
-npm run start
 ```
 
-Without environment variables, the landing page is usable and auth/protected routes show setup instructions instead of simulated data. A real registration/login/email test requires your configured Supabase project and inbox.
+Testy PostgreSQL uruchamiają rzeczywiste pliki SQL w PGlite z testową implementacją `auth.users` i `auth.uid()`. Pokrywają zarówno nową instalację, jak i przejście ze starego schematu, zachowanie danych, dostęp bez danych postaci, RLS i zapis częściowego/pustego profilu. Osobne testy dawnego schematu pozostają testami historycznej migracji 001, a nie wymaganiami obecnego systemu.
 
-Tests execute the actual migration in an in-memory PostgreSQL engine (PGlite) with a minimal test-only `auth.users`/`auth.uid()` implementation. They cover profile triggers, email/onboarding gates, catalog consistency, RLS/grants, privilege escalation prevention, ownership, RSVP uniqueness/closed events, presence throttling, and deletion behavior. They do **not** substitute for hosted Supabase Auth, PostgREST integration, or email delivery tests.
+Test na prawdziwym Supabase i skrzynce e-mail:
 
-After hosted setup, verify manually:
+1. Zarejestruj konto i sprawdź, że formularz zawiera tylko e-mail oraz hasło.
+2. Kliknij link z wiadomości. Oczekiwany rezultat: panel główny, bez formularza postaci po drodze.
+3. Bez uzupełniania profilu odśwież panel i sprawdź dostęp.
+4. Otwórz **Twój Profil**, zapisz tylko jedno pole, następnie wyczyść pola i zapisz ponownie.
+5. Wyloguj się i zaloguj ponownie. Nadal nie powinno być obowiązkowego onboardingu.
 
-1. Register and confirm the email; logging in before confirmation must fail.
-2. Visit `/dashboard` before onboarding; expect `/onboarding`.
-3. Save a character; expect `/dashboard`. Refresh to see recent activity.
-4. Edit the character, log out, and verify protected routes return to login.
-5. Register a second account and verify that it cannot see guild data before onboarding or change another account's profile/role.
+Aktywność oznacza korzystanie ze strony, nie obecność w WoW. Panel wysyła żądanie po otwarciu widocznej karty, co pięć minut i po powrocie do karty. Baza ogranicza zapisy do jednego na minutę. Lista aktywnych obejmuje ostatnie 15 minut; odśwież stronę, aby ją zaktualizować. Żądania aktywności muszą pochodzić z origin określonego przez `NEXT_PUBLIC_SITE_URL`.
 
-The browser sends a presence heartbeat only while the dashboard tab is visible, every five minutes and when returning to the tab. Requests must originate from the canonical `NEXT_PUBLIC_SITE_URL` origin; use that hostname in the browser rather than a local IP alias. The database throttles actual writes to one per minute. Active-player results are server-rendered; refresh to update the list.
+## Język i kolejne etapy
 
-## Discord preparation
+Wszystkie obecne i przyszłe formularze, tabele, role, błędy oraz powiadomienia muszą być po polsku (`lang="pl"`). Wspólne etykiety znajdują się w [wow.ts](src/lib/wow.ts) i [labels.ts](src/lib/labels.ts).
 
-[notifyDiscord](src/lib/discord.ts) reads the optional server-only `DISCORD_WEBHOOK_URL`. It accepts event/LFG notification details, restricts webhook destinations to Discord, disables mention parsing, applies Discord field limits, times out after five seconds, and rejects delivery errors. Missing configuration is logged as disabled.
-
-When implementing creation handlers, persist the event/LFG first, then call this utility in a separate notification step. Catch and log notification failures without webhook tokens and without rolling back or misreporting the successful database write. Do not tell the user that Discord delivery succeeded unless it did. Durable delivery/retries need an outbox or background job and are outside this first milestone.
-
-## Structure
-
-```text
-src\
-  app\
-    (auth)\                 Login, registration, auth server actions
-    auth\callback\           PKCE code exchange
-    auth\confirm\            Email token confirmation
-    onboarding\             Protected character form and server action
-    dashboard\              Protected member dashboard
-    api\presence\            Authenticated same-origin activity heartbeat
-    setup\                  Missing-configuration instructions
-  components\
-    ui\                     Generated shadcn/ui components
-  lib\
-    supabase\               Typed browser/read-only server/writable server clients
-    auth.ts                 Verified member and onboarding guards
-    database.types.ts       Types matching the initial schema
-    wow.ts                  Centralized character choices
-    validation.ts           Shared form validation
-    discord.ts              Server-only webhook delivery
-  proxy.ts                  Next.js 16 session cookie refresh
-supabase\
-  migrations\               SQL schema, functions, grants and RLS
-tests\                      Validation, presence, payload and PostgreSQL tests
-```
-
-`database.types.ts` is maintained against this initial migration. After connecting to Supabase, regenerate database types with the Supabase CLI whenever the schema changes, preserving any application aliases (`Profile`, etc.) in a separate module if needed.
+Lista członków z filtrami, wydarzenia i wyszukiwanie grup pozostają kolejnymi etapami. Nowa instalacja nie potrzebuje ich tabel. Przygotowana [funkcja Discorda](src/lib/discord.ts) pozostaje narzędziem do przyszłych powiadomień; brak webhooka nie blokuje kont ani profili.

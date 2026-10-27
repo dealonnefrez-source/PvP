@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { CHARACTER_CLASSES, CLASS_LABELS, PROFESSIONS, PROFESSION_LABELS, RACES, RACE_LABELS } from "../src/lib/wow";
 import { COMBAT_ROLE_LABELS, EVENT_STATUS_LABELS, EVENT_TYPE_LABELS, GUILD_ROLE_LABELS, LFG_ACTIVITY_LABELS, LFG_STATUS_LABELS } from "../src/lib/labels";
-import { loginSchema, onboardingSchema, registrationSchema } from "../src/lib/validation";
+import { loginSchema, profileSchema, registrationSchema } from "../src/lib/validation";
 
 describe("Polski interfejs", () => {
   it("zapewnia etykiety wszystkich klas, ras i profesji bez zmiany wartości w bazie", () => {
@@ -52,13 +52,13 @@ describe("Polski interfejs", () => {
       [{ primary_professions: ["Fishing"] }, "Wybierz profesję z listy."],
       [{ primary_professions: ["Mining", "Mining"] }, "Wybierz różne profesje."],
     ] as const) {
-      const result = onboardingSchema.safeParse({ ...character, ...change });
+      const result = profileSchema.safeParse({ ...character, ...change });
       assert.equal(result.error?.issues[0].message, message);
     }
   });
 
   it("stosuje polską lokalizację Zod dla brakujących pól i błędnych typów", () => {
-    for (const result of [loginSchema.safeParse({}), onboardingSchema.safeParse({ primary_professions: null })]) {
+    for (const result of [loginSchema.safeParse({}), profileSchema.safeParse({ primary_professions: null })]) {
       assert.equal(result.success, false);
       for (const issue of result.error?.issues ?? []) {
         assert.doesNotMatch(issue.message, /Invalid|expected|received|Too (?:big|small)/);

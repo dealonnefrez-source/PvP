@@ -35,7 +35,7 @@ export async function register(_previous: FormState, formData: FormData): Promis
     console.error("Registration failed", { code: error.code, status: error.status });
     return { error: "Nie udało się zarejestrować. Spróbuj ponownie później lub skontaktuj się z administratorem gildii." };
   }
-  return { success: "Sprawdź skrzynkę e-mail, aby potwierdzić konto, a następnie zaloguj się. Jeśli masz już konto, przejdź do strony logowania." };
+  return { success: "Sprawdź skrzynkę e-mail i kliknij link potwierdzający. Po potwierdzeniu nowe konto uzyska dostęp do strony bez uzupełniania profilu. Jeśli masz już konto, zaloguj się." };
 }
 
 export async function logout() {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { loginSchema, onboardingSchema, registrationSchema } from "../src/lib/validation";
+import { loginSchema, profileSchema, registrationSchema } from "../src/lib/validation";
 import { buildDiscordPayload } from "../src/lib/discord-payload";
 
 const character = {
@@ -25,23 +25,35 @@ describe("authentication validation", () => {
 
 describe("character validation", () => {
   it("accepts and trims a complete character", () => {
-    assert.equal(onboardingSchema.parse({ ...character, character_name: " Thrall " }).character_name, "Thrall");
+    assert.equal(profileSchema.parse({ ...character, character_name: " Thrall " }).character_name, "Thrall");
   });
   it("permits zero professions", () => {
-    assert.equal(onboardingSchema.safeParse({ ...character, primary_professions: [] }).success, true);
+    assert.equal(profileSchema.safeParse({ ...character, primary_professions: [] }).success, true);
   });
   it("rejects duplicated, unknown, and excessive professions", () => {
     for (const primary_professions of [["Mining", "Mining"], ["Fishing"], ["Mining", "Skinning", "Alchemy"]]) {
-      assert.equal(onboardingSchema.safeParse({ ...character, primary_professions }).success, false);
+      assert.equal(profileSchema.safeParse({ ...character, primary_professions }).success, false);
     }
   });
-  it("rejects unknown races and classes, blank realms, and malformed names", () => {
-    for (const change of [{ race: "Unknown" }, { character_class: "Unknown" }, { realm: " " }, { character_name: "<script>" }]) {
-      assert.equal(onboardingSchema.safeParse({ ...character, ...change }).success, false);
+  it("rejects unknown races and classes and malformed nonempty names", () => {
+    for (const change of [{ race: "Unknown" }, { character_class: "Unknown" }, { character_name: "<script>" }]) {
+      assert.equal(profileSchema.safeParse({ ...character, ...change }).success, false);
     }
   });
   it("supports accented character names", () => {
-    assert.equal(onboardingSchema.safeParse({ ...character, character_name: "Éowyn" }).success, true);
+    assert.equal(profileSchema.safeParse({ ...character, character_name: "Éowyn" }).success, true);
+  });
+  it("accepts a completely empty optional profile and normalizes blank fields to null", () => {
+    assert.deepEqual(profileSchema.parse({
+      character_name: "", realm: " ", race: "", character_class: "", primary_professions: [],
+    }), {
+      character_name: null, realm: null, race: null, character_class: null, primary_professions: [],
+    });
+  });
+  it("accepts partial profiles without requiring a race, class, or realm", () => {
+    assert.equal(profileSchema.safeParse({
+      character_name: "Thrall", realm: null, race: null, character_class: null, primary_professions: ["Mining"],
+    }).success, true);
   });
 });
 

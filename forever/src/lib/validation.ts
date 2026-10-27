@@ -13,12 +13,17 @@ export const registrationSchema = loginSchema.extend({
   password: z.string().min(12, "Użyj co najmniej 12 znaków.").max(128, "Użyj nie więcej niż 128 znaków."),
 });
 
-export const onboardingSchema = z.object({
-  character_name: z.string().trim().min(2, "Nazwa postaci musi mieć co najmniej 2 znaki.").max(24, "Nazwa postaci może mieć maksymalnie 24 znaki.")
-    .regex(/^[\p{L}][\p{L}'-]*$/u, "W nazwie postaci użyj liter, apostrofów lub łączników."),
-  realm: z.string().trim().min(2, "Podaj nazwę serwera (co najmniej 2 znaki).").max(80, "Nazwa serwera może mieć maksymalnie 80 znaków."),
-  race: z.enum(RACES, { error: "Wybierz rasę." }),
-  character_class: z.enum(CHARACTER_CLASSES, { error: "Wybierz klasę." }),
+const optionalField = <T extends z.ZodType>(schema: T) => z.preprocess(
+  (value) => typeof value === "string" && value.trim() === "" ? null : value,
+  schema.nullable(),
+);
+
+export const profileSchema = z.object({
+  character_name: optionalField(z.string().trim().min(2, "Nazwa postaci musi mieć co najmniej 2 znaki.").max(24, "Nazwa postaci może mieć maksymalnie 24 znaki.")
+    .regex(/^[\p{L}][\p{L}'-]*$/u, "W nazwie postaci użyj liter, apostrofów lub łączników.")),
+  realm: optionalField(z.string().trim().min(2, "Podaj nazwę serwera (co najmniej 2 znaki).").max(80, "Nazwa serwera może mieć maksymalnie 80 znaków.")),
+  race: optionalField(z.enum(RACES, { error: "Wybierz rasę." })),
+  character_class: optionalField(z.enum(CHARACTER_CLASSES, { error: "Wybierz klasę." })),
   primary_professions: z.array(z.enum(PROFESSIONS, { error: "Wybierz profesję z listy." })).max(2, "Wybierz maksymalnie dwie profesje główne.")
     .refine((values) => new Set(values).size === values.length, "Wybierz różne profesje."),
 });

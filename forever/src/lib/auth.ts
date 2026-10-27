@@ -16,16 +16,12 @@ export const getMemberContext = cache(async () => {
   if (!user) redirect("/login");
   if (!user.email_confirmed_at) redirect("/login?notice=verify-email");
 
-  const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+  const { data: profile, error: profileError } = await supabase.from("profiles")
+    .select("id, character_name, realm, race, character_class, primary_professions, last_active_at, created_at, updated_at")
+    .eq("id", user.id).single();
   if (profileError) {
     console.error("Unable to load member profile", { code: profileError.code });
     throw new Error("Nie udało się wczytać profilu. Sprawdź, czy migracja bazy danych została zastosowana.");
   }
   return { supabase, user, profile };
 });
-
-export async function requireOnboardedMember() {
-  const context = await getMemberContext();
-  if (!context.profile.onboarded_at) redirect("/onboarding");
-  return context;
-}
