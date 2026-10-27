@@ -6,8 +6,9 @@ export const COMBAT_ROLES = ["tank", "healer", "dps"] as const;
 const slots = z.coerce.number().int("Podaj całkowitą liczbę miejsc.").min(0, "Liczba miejsc nie może być ujemna.").max(80, "Maksymalnie 80 miejsc.");
 export const eventSchema = z.object({
   title: z.string().trim().min(3, "Tytuł musi mieć co najmniej 3 znaki.").max(120, "Tytuł może mieć maksymalnie 120 znaków."),
-  description: z.string().trim().max(4000, "Opis może mieć maksymalnie 4000 znaków."),
-  event_type: z.enum(["battleground", "pvp", "raid", "other"], { error: "Wybierz rodzaj wydarzenia." }),
+  description: z.string().trim().min(1, "Opisz, co będziecie robić.").max(4000, "Opis może mieć maksymalnie 4000 znaków."),
+  event_type: z.preprocess((value) => value === "" || value == null ? "other" : value,
+    z.enum(["battleground", "pvp", "raid", "other"], { error: "Wybierz rodzaj wydarzenia." })),
   starts_at: z.iso.datetime({ offset: true, error: "Podaj prawidłowy termin rozpoczęcia." }),
   ends_at: z.iso.datetime({ offset: true, error: "Podaj prawidłowy termin zakończenia." }),
   tanks_needed: slots,
@@ -17,8 +18,8 @@ export const eventSchema = z.object({
   message: "Zakończenie musi być późniejsze niż rozpoczęcie.",
 }).refine((value) => {
   const total = value.tanks_needed + value.healers_needed + value.dps_needed;
-  return total > 0 && total <= 80;
-}, { message: "Zaplanuj od 1 do 80 miejsc łącznie." });
+  return total <= 80;
+}, { message: "Zaplanuj maksymalnie 80 miejsc łącznie." });
 
 export const rsvpSchema = z.object({
   event_id: z.uuid("Nieprawidłowe wydarzenie."),

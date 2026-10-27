@@ -126,7 +126,32 @@ Test na prawdziwym Supabase i skrzynce e-mail:
 
 Aktywność oznacza korzystanie ze strony, nie obecność w WoW. Panel wysyła żądanie po otwarciu widocznej karty, co pięć minut i po powrocie do karty. Baza ogranicza zapisy do jednego na minutę. Lista aktywnych obejmuje ostatnie 15 minut; odśwież stronę, aby ją zaktualizować. Żądania aktywności muszą pochodzić z origin określonego przez `NEXT_PUBLIC_SITE_URL`.
 
-## Wydarzenia PvP i kalendarz
+## Role gildii, członkowie i otwarte wydarzenia — aktualna wersja
+
+Po migracji 003 uruchom raz jako `postgres` **[202610270004_guild_roles_open_events.sql](supabase/migrations/202610270004_guild_roles_open_events.sql)**. To pełny skrypt potrzebny tej wersji, nie tylko dodanie kolumny. Nie powtarzaj wcześniejszych migracji. Zachowuje dane i zamienia dawną rolę `admin` na `guild_master`, także na istniejących kontach. Role to `member` (domyślna), `officer` i `guild_master`.
+
+- `/roster` (**Członkowie**) pokazuje wszystkie konta z profilami, również niepotwierdzone i bez postaci, po 50 na stronę. Nie ujawnia e-maili.
+- Potwierdzony zwykły członek widzi listę bez kontrolek edycji. Oficer i mistrz gildii mogą nadać **każdą** rolę każdemu, także sobie oraz innym zarządzającym. Nie ma zabezpieczenia ostatniego mistrza gildii — to celowo równorzędne uprawnienia według obecnych wymagań. Przed zmianą jest potwierdzenie.
+- Zmiana roli odbywa się przez chronione RPC `set_guild_role`, a nie publiczne `UPDATE guild_role`. Sprawdzenie uprawnień jest również w bazie; ukrycie przycisku nie jest jedynym zabezpieczeniem.
+- Po samodegradacji kontrolki zarządzania znikają. Jeśli nikt nie ma już uprawnień, właściciel projektu może je przywrócić w SQL Editor:
+
+  ```sql
+  update public.profiles
+  set guild_role = 'guild_master'
+  where id = 'TUTAJ_UUID_KONTA';
+  ```
+
+- Każde potwierdzone konto może utworzyć wydarzenie, bez uzupełniania postaci. Wymagane są tytuł, rozpoczęcie i opis „co będziemy robić”. Kategoria jest opcjonalna; brak oznacza `other` (**Inne**). Dostępne są PvP, Rajd na miasto, Premade BG i Inne.
+- Zakończenie jest opcjonalne: bez niego aplikacja ustala godzinę trwania. Cele składu również są opcjonalne — same zera oznaczają otwarty skład, bez wykazywania fikcyjnych braków czy nadwyżek. Nadal obowiązują zapisy z rolą na dane wydarzenie.
+- Autor może odwołać własne wydarzenie; oficer i mistrz gildii mogą zarządzać wszystkimi. Zwykły członek nie zmienia cudzych wydarzeń ani ról.
+- Kalendarz, lista i szczegóły odczytują **aktualną rolę autora z `profiles`**. Dla oficera i mistrza gildii pojawia się czerwony akcent i etykieta **Wydarzenie oficerskie**. Zmiana roli wpływa też na wcześniejsze wydarzenia, po odświeżeniu; usunięty autor nie otrzymuje wyróżnienia.
+- Po zmianie ról aplikacja unieważnia widoki; inni użytkownicy widzą zmiany po odświeżeniu. Nie ma subskrypcji Realtime.
+
+Po uruchomieniu migracji 004 wdróż nowy kod na Vercel. Sprawdź jako członek tworzenie wydarzenia oraz brak edycji ról. Następnie jako oficer zmień rolę autora i sprawdź czerwone wyróżnienie wydarzenia.
+
+## Wydarzenia PvP i kalendarz — poprzedni etap 003
+
+Poniższy opis dokumentuje etap 003. W aktualnej wersji **pierwszeństwo mają zasady migracji 004 opisane powyżej**: tworzenie dla każdego, `guild_master` zamiast `admin`, opcjonalne cele składu i kategoria.
 
 Po migracji 002 uruchom **raz** w Supabase SQL Editor jako `postgres`:
 

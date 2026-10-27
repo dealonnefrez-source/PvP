@@ -17,7 +17,7 @@ export const getMemberContext = cache(async () => {
   if (!user.email_confirmed_at) redirect("/login?notice=verify-email");
 
   const { data: profile, error: profileError } = await supabase.from("profiles")
-    .select("id, character_name, realm, race, character_class, primary_professions, last_active_at, created_at, updated_at")
+    .select("id, guild_role, character_name, realm, race, character_class, primary_professions, last_active_at, created_at, updated_at")
     .eq("id", user.id).single();
   if (profileError) {
     console.error("Unable to load member profile", { code: profileError.code });

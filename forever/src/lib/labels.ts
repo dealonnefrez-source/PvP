@@ -3,7 +3,7 @@ import type { CombatRole, GuildRole } from "./database.types";
 export const GUILD_ROLE_LABELS: Record<GuildRole, string> = {
   member: "Członek gildii",
   officer: "Oficer",
-  admin: "Administrator",
+  guild_master: "Mistrz gildii",
 };
 
 export const COMBAT_ROLE_LABELS: Record<CombatRole, string> = {
@@ -13,7 +13,7 @@ export const COMBAT_ROLE_LABELS: Record<CombatRole, string> = {
 };
 
 export const EVENT_TYPE_LABELS: Record<"pvp" | "battleground" | "raid" | "other", string> = {
-  pvp: "Arena",
+  pvp: "PvP",
   battleground: "Premade BG",
   raid: "Rajd na miasto",
   other: "Inne",

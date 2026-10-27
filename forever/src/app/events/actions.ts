@@ -21,8 +21,7 @@ function refreshEvent(id: string) {
 }
 
 export async function createEvent(_previous: EventFormState, formData: FormData): Promise<EventFormState> {
-  const { user, isOfficer } = await getEventContext();
-  if (!isOfficer) return { error: "Tylko oficer lub administrator może zaplanować wydarzenie." };
+  const { user } = await getMemberContext();
   const parsed = eventSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   if (Date.parse(parsed.data.starts_at) <= Date.now()) return { error: "Wydarzenie musi zaczynać się w przyszłości." };
@@ -84,10 +83,15 @@ export async function withdrawRsvp(_previous: EventFormState, formData: FormData
 }
 
 export async function cancelEvent(_previous: EventFormState, formData: FormData): Promise<EventFormState> {
-  const { isOfficer } = await getEventContext();
-  if (!isOfficer) return { error: "Tylko oficer lub administrator może odwołać wydarzenie." };
+  const { isOfficer, user, supabase: reader } = await getEventContext();
   const id = z.uuid().safeParse(formData.get("event_id"));
   if (!id.success) return { error: "Nieprawidłowe wydarzenie." };
+  const { data: event, error: readError } = await reader.from("events").select("created_by").eq("id", id.data).maybeSingle();
+  if (readError) {
+    console.error("Event cancellation permission query failed", { code: readError.code });
+    return { error: "Nie udało się sprawdzić organizatora wydarzenia." };
+  }
+  if (!event || (!isOfficer && event.created_by !== user.id)) return { error: "Możesz odwołać własne wydarzenie. Cudzymi zarządza oficer lub mistrz gildii." };
   const supabase = await createWritableClient();
   const { error } = await supabase.from("events").update({ status: "cancelled" })
     .eq("id", id.data).eq("status", "scheduled").select("id").single();

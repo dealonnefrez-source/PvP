@@ -22,6 +22,7 @@ export default async function ProfilePage() {
       </Card>
       <Link href="/dashboard" className="mt-6 inline-block text-primary underline">Wróć do panelu głównego</Link>
       <Link href="/events" className="ml-5 mt-6 inline-block text-primary underline">Wydarzenia</Link>
+      <Link href="/roster" className="ml-5 mt-6 inline-block text-primary underline">Członkowie</Link>
     </main>
   );
 }

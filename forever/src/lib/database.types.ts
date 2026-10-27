@@ -1,10 +1,11 @@
 import type { CHARACTER_CLASSES, PROFESSIONS, RACES } from "./wow";
 
-export type GuildRole = "member" | "officer" | "admin";
+export type GuildRole = "member" | "officer" | "guild_master";
 export type CombatRole = "tank" | "healer" | "dps";
 
 export type Profile = {
   id: string;
+  guild_role: GuildRole;
   character_name: string | null;
   realm: string | null;
   race: (typeof RACES)[number] | null;
@@ -46,7 +47,7 @@ export type EventRsvp = {
 };
 type EventInput = Pick<GuildEvent, "created_by" | "title" | "description" | "event_type" | "starts_at" | "ends_at" | "tanks_needed" | "healers_needed" | "dps_needed">;
 
-// Schema after migrations 002 and 003.
+// Schema after migrations 002, 003 and 004.
 export type Database = {
   public: {
     Tables: {
@@ -57,6 +58,7 @@ export type Database = {
     Views: Record<string, never>;
     Functions: {
       is_guild_officer: { Args: Record<string, never>; Returns: boolean };
+      set_guild_role: { Args: { p_profile_id: string; p_role: GuildRole }; Returns: undefined };
       save_event_rsvp: { Args: { p_event_id: string; p_role: CombatRole }; Returns: undefined };
       touch_presence: { Args: Record<string, never>; Returns: undefined };
       active_players: {

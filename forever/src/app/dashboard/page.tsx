@@ -21,6 +21,7 @@ export default async function DashboardPage() {
         <Link href="/" className="flex items-center gap-3 text-xl font-bold tracking-widest"><Shield className="text-primary" aria-hidden="true" /> FOREVER</Link>
         <nav className="flex flex-wrap items-center gap-3" aria-label="Nawigacja członka gildii">
           <Link href="/events" className={buttonVariants()}>Wydarzenia</Link>
+          <Link href="/roster" className={buttonVariants({ variant: "outline" })}>Członkowie</Link>
           <Link href="/profile" className={buttonVariants({ variant: "outline" })}>Twój Profil</Link>
           <form action={logout}><Button type="submit" variant="ghost">Wyloguj się</Button></form>
         </nav>
@@ -56,7 +57,7 @@ export default async function DashboardPage() {
         </Card>
       </div>
       <aside className="mt-8 rounded-xl border border-dashed p-6 text-sm text-muted-foreground">
-        Wydarzenia i zapisy są dostępne w zakładce „Wydarzenia”. Wkrótce: lista członków gildii z filtrami i wyszukiwanie grup.
+        Organizuj aktywności w zakładce „Wydarzenia”, a listę gildii znajdziesz w „Członkowie”. Wkrótce: wyszukiwanie grup.
         Dostęp do strony nie wymaga uzupełniania danych postaci.
       </aside>
     </main>

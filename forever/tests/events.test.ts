@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { calendarMonth, canSignUp, eventSchema, guildDateKey, localDateTimeToIso, roleSummary, roleTarget, rsvpSchema } from "../src/lib/events";
 
 const valid = {
-  title: "Premade BG", description: "", event_type: "battleground",
+  title: "Premade BG", description: "Gramy razem na polach bitew", event_type: "battleground",
   starts_at: "2030-10-27T18:00:00.000Z", ends_at: "2030-10-27T20:00:00.000Z",
   tanks_needed: 0, healers_needed: 3, dps_needed: 7,
 };
@@ -17,9 +17,13 @@ describe("Walidacja wydarzeń i RSVP", () => {
       { title: " " }, { title: "x".repeat(121) }, { description: "x".repeat(4001) },
       { event_type: "unknown" }, { ends_at: valid.starts_at },
       { starts_at: "2030-10-27T18:00" }, { healers_needed: -1 }, { tanks_needed: 0.5 },
-      { tanks_needed: 0, healers_needed: 0, dps_needed: 0 },
+      { description: " " },
       { tanks_needed: 80, healers_needed: 1, dps_needed: 0 },
     ]) assert.equal(eventSchema.safeParse({ ...valid, ...change }).success, false);
+  });
+  it("przyjmuje brak kategorii i otwarty skład bez celów", () => {
+    const result = eventSchema.parse({ ...valid, event_type: "", tanks_needed: 0, healers_needed: 0, dps_needed: 0 });
+    assert.equal(result.event_type, "other");
   });
   it("wymaga konkretnej roli i prawidłowego identyfikatora wydarzenia", () => {
     const event_id = "6a4fb5b2-1c76-4b9b-8a36-e79d92af30dd";

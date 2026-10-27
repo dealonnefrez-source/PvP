@@ -2,7 +2,7 @@ import type { SyntheticEvent } from "react";
 
 function getField(event: SyntheticEvent<HTMLFormElement>) {
   const field = event.target;
-  return field instanceof HTMLInputElement || field instanceof HTMLSelectElement ? field : null;
+  return field instanceof HTMLInputElement || field instanceof HTMLSelectElement || field instanceof HTMLTextAreaElement ? field : null;
 }
 
 export function clearFieldValidity(event: SyntheticEvent<HTMLFormElement>) {
